@@ -1,0 +1,13 @@
+# La appliance se distribuye por un canal de descarga independiente.
+*.ova
+
+# Registros locales generados por los scripts.
+logs/
+*.log
+
+# Archivos temporales y respaldos locales.
+*.tmp
+*.bak
+*~
+Thumbs.db
+Desktop.ini
