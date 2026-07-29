@@ -11,7 +11,7 @@ El estudiante solo necesita instalar **Oracle VirtualBox**. No necesita Vagrant,
 3. Reinicie Windows si el instalador de VirtualBox lo solicita.
 4. Descargue la appliance `Curso_DNS_Lambda_1.1.ova` desde el enlace entregado por el instructor o desde el LMS.
 5. Coloque la OVA en la misma carpeta de estos archivos.
-6. No cambie los nombres de los archivos ni ejecute los `.ps1` directamente.
+6. No cambie los nombres de los archivos, no mueva la carpeta `common` y no ejecute los `.ps1` directamente.
 
 La carpeta debe verse así:
 
@@ -31,6 +31,18 @@ detener-lab.ps1
 desinstalar-lab.ps1
 diagnosticar-lab.ps1
 limpiar-known-hosts-lab.ps1
+common\
+├── part-01.ps1
+├── part-02.ps1
+├── part-03.ps1
+├── part-04.ps1
+├── part-05.ps1
+├── part-06.ps1
+├── part-07.ps1
+├── part-08.ps1
+├── part-09.ps1
+├── part-10.ps1
+└── part-11.ps1
 ```
 
 ## Qué hará el instalador
