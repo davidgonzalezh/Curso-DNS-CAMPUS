@@ -1,23 +1,33 @@
 # Curso DNS CAMPUS — Máquina de laboratorio 1.1
 
-Este paquete prepara en Windows 11 la máquina virtual utilizada en los laboratorios del **Curso DNS CAMPUS**.
+Esta carpeta instala en Windows 11 la máquina virtual utilizada en los laboratorios del **Curso DNS CAMPUS**.
 
-El estudiante solo necesita instalar **Oracle VirtualBox**. No necesita Vagrant, una caja `.box`, un `Vagrantfile` ni realizar configuraciones manuales de red.
+La instalación es automática. El estudiante no necesita Vagrant, archivos `.box`, un `Vagrantfile` ni configurar manualmente las interfaces de VirtualBox.
 
-## Antes de comenzar
+## 1. Requisitos
 
-1. Instale Oracle VirtualBox 7.2.x para Windows.
-2. Acepte la instalación de sus componentes de red.
-3. Reinicie Windows si el instalador de VirtualBox lo solicita.
-4. Descargue la appliance `Curso_DNS_Lambda_1.1.ova` desde el enlace entregado por el instructor o desde el LMS.
-5. Coloque la OVA en la misma carpeta de estos archivos.
-6. No cambie los nombres de los archivos, no mueva la carpeta `common` y no ejecute los `.ps1` directamente.
+Antes de comenzar, compruebe lo siguiente:
 
-La carpeta debe verse así:
+1. Windows 11 de 64 bits.
+2. Virtualización habilitada en el firmware del equipo.
+3. Oracle VirtualBox 7.2.x instalado con sus controladores de red.
+4. Al menos 4 GB de memoria disponibles para la VM.
+5. Espacio libre suficiente para importar el disco virtual.
+6. Permisos para aprobar la solicitud UAC de Windows.
+7. La appliance `Curso_DNS_Lambda_1.1.ova` descargada desde el LMS o desde el medio entregado por el instructor.
+
+Reinicie Windows cuando la instalación o actualización de VirtualBox lo solicite.
+
+## 2. Preparar la carpeta
+
+Coloque la OVA en la misma carpeta de los scripts. No cambie los nombres de los archivos y no ejecute directamente los archivos `.ps1`.
+
+La carpeta debe contener como mínimo:
 
 ```text
 Curso_DNS_Lambda_1.1.ova
 SHA256SUMS.txt
+README.md
 INSTALAR_LAB.cmd
 INICIAR_LAB.cmd
 DETENER_LAB.cmd
@@ -31,41 +41,41 @@ detener-lab.ps1
 desinstalar-lab.ps1
 diagnosticar-lab.ps1
 limpiar-known-hosts-lab.ps1
-common\
-├── part-01.ps1
-├── part-02.ps1
-├── part-03.ps1
-├── part-04.ps1
-├── part-05.ps1
-├── part-06.ps1
-├── part-07.ps1
-├── part-08.ps1
-├── part-09.ps1
-├── part-10.ps1
-└── part-11.ps1
 ```
 
-## Qué hará el instalador
+## 3. Diagnóstico previo
 
-Al ejecutar `INSTALAR_LAB.cmd`, el sistema:
+El diagnóstico es de solo lectura. No instala ni elimina máquinas virtuales.
 
-1. solicitará permisos administrativos;
-2. comprobará que VirtualBox esté instalado;
-3. verificará el SHA-256 de la OVA;
-4. comprobará que los puertos y la red del laboratorio estén disponibles;
-5. eliminará de `known_hosts` únicamente las entradas antiguas relacionadas con este laboratorio;
-6. creará una interfaz privada de VirtualBox para comunicar Windows con Ubuntu;
-7. asignará `192.168.10.1/24` a Windows dentro de esa red privada;
-8. importará la VM como `Curso-DNS-Lambda`;
-9. configurará el acceso SSH `127.0.0.1:2222 → TCP/22`;
-10. configurará WebSSH `127.0.0.1:8888 → TCP/8888`;
-11. conectará Ubuntu a la dirección fija `192.168.10.53/24`;
-12. iniciará la VM en modo Headless;
-13. abrirá automáticamente el navegador cuando WebSSH esté listo.
+Ejecute:
 
-El instalador no crea rutas estáticas, no instala una VPN, no agrega reglas al Firewall de Windows y no instala BIND. BIND se instalará durante los laboratorios cuando el curso lo indique.
+```text
+DIAGNOSTICAR_LAB.cmd
+```
 
-## Instalar el laboratorio
+Puede finalizar con alguno de estos resultados:
+
+### `RESULTADO: LISTO PARA INSTALAR`
+
+No se detectó un bloqueo ni una corrección pendiente.
+
+### `RESULTADO: LISTO CON CORRECCIONES INTERACTIVAS`
+
+El instalador puede continuar, pero mostrará una decisión antes de modificar el elemento detectado. Algunos ejemplos son una interfaz Host-Only preexistente, otra red en `192.168.10.0/24`, una VM activa, una instalación parcial o un puerto ocupado.
+
+### `RESULTADO: NO LISTO PARA INSTALAR`
+
+Existe un problema que el instalador no debe intentar corregir automáticamente, por ejemplo una OVA ausente o dañada, un SHA-256 incorrecto o una versión de VirtualBox fuera de la rama 7.2.x. El registro explica el bloqueo exacto.
+
+El diagnóstico y el instalador usan la misma evaluación de red. El diagnóstico no modifica el equipo.
+
+Los registros se guardan en:
+
+```text
+logs\
+```
+
+## 4. Instalar
 
 Haga doble clic en:
 
@@ -73,21 +83,119 @@ Haga doble clic en:
 INSTALAR_LAB.cmd
 ```
 
-Acepte la solicitud de Control de cuentas de usuario de Windows.
+Apruebe la solicitud de Control de cuentas de usuario. No cierre la ventana durante el proceso.
 
-No cierre la ventana mientras el instalador está trabajando. Cada paso mostrará su estado y se guardará un registro dentro de:
+El instalador:
+
+1. verifica VirtualBox;
+2. verifica el SHA-256 de la OVA;
+3. inspecciona la appliance con `VBoxManage import --dry-run`;
+4. revisa instalaciones incompletas;
+5. revisa la red `192.168.10.0/24`;
+6. revisa los puertos `2222` y `8888`;
+7. elimina únicamente entradas SSH antiguas relacionadas con este laboratorio;
+8. crea o reutiliza una interfaz VirtualBox Host-Only compatible;
+9. importa la VM como `Curso-DNS-Lambda`;
+10. configura NAT, SSH y WebSSH;
+11. inicia la VM en modo Headless;
+12. verifica los tres accesos del laboratorio.
+
+## 5. Preguntas que puede mostrar el instalador
+
+### 5.1 Ya existe una interfaz VirtualBox Host-Only compatible
+
+El instalador identifica la interfaz por la información de VirtualBox, su GUID, su dirección y la interfaz correspondiente en Windows. El nombre visible en Windows puede ser `Ethernet 4` aunque VirtualBox la muestre como `VirtualBox Host-Only Ethernet Adapter`.
+
+Opciones:
 
 ```text
-logs\
+A = usar la interfaz existente — recomendado
+N = eliminarla y crear una nueva
+C = cancelar
 ```
 
-Cuando finalice correctamente, el navegador abrirá:
+Al elegir **A**:
+
+- la interfaz se reutiliza;
+- no se elimina;
+- no se modifica su DHCP porque no fue creada por este instalador;
+- el desinstalador la conservará.
+
+Al elegir **N**, el script mostrará las VM que la utilizan, ofrecerá apagarlas correctamente y solicitará confirmación antes de desconectarlas y retirar la interfaz.
+
+### 5.2 Existen varias interfaces VirtualBox Host-Only compatibles
+
+Cuando hay más de una interfaz que coincide con `192.168.10.1/24`, el script no elige una arbitrariamente. Muestra las interfaces y ofrece:
+
+```text
+N = eliminar las interfaces compatibles confirmadas y crear una nueva
+R = corregirlas manualmente y volver a evaluar
+C = cancelar sin eliminarlas
+```
+
+Antes de eliminar una interfaz, el instalador identifica las VM que la utilizan y ofrece apagarlas correctamente.
+
+### 5.3 Otra interfaz usa `192.168.10.0/24`
+
+Puede tratarse de una LAN física, una VPN o un adaptador de otra plataforma. El script **no la elimina automáticamente**.
+
+Opciones:
+
+```text
+D = deshabilitar temporalmente el adaptador durante el laboratorio
+R = reintentar después de cambiar su dirección o desconectarlo
+C = cancelar sin modificarlo
+```
+
+La opción **D** puede interrumpir la conectividad de ese adaptador. El instalador muestra su nombre, descripción, índice y GUID antes de deshabilitarlo. El desinstalador lo vuelve a habilitar. Si la instalación falla después de deshabilitarlo, el instalador intenta restaurarlo antes de salir.
+
+La red de la appliance no puede cambiarse desde el instalador porque Ubuntu usa de forma fija `192.168.10.53/24` en los laboratorios del curso.
+
+### 5.4 Una VM necesaria está encendida
+
+El script muestra la VM y ofrece:
+
+```text
+A = solicitar apagado correcto mediante ACPI
+F = forzar apagado
+C = cancelar
+```
+
+Use **A** primero. El apagado forzado equivale a cortar la alimentación y solo debe usarse cuando el sistema invitado no responde.
+
+### 5.5 Los puertos `2222` o `8888` están ocupados
+
+El script muestra el PID y el proceso correspondiente y ofrece:
+
+```text
+R = cerrar el proceso manualmente y reintentar
+T = terminar el proceso mostrado
+C = cancelar
+```
+
+No termina procesos sin confirmación.
+
+### 5.6 Existe una instalación parcial
+
+El script muestra el estado de `Curso-DNS-Lambda` y ofrece eliminarla antes de volver a importar la OVA. No elimina otras VM por coincidencias parciales.
+
+## 6. Resultado esperado
+
+La instalación solo termina correctamente cuando responden:
+
+```text
+SSH por NAT: 127.0.0.1:2222
+WebSSH:      127.0.0.1:8888
+SSH directo: 192.168.10.53:22
+```
+
+El navegador abrirá:
 
 ```text
 http://127.0.0.1:8888/
 ```
 
-Use estos datos en WebSSH:
+Credenciales iniciales:
 
 ```text
 Hostname: 127.0.0.1
@@ -96,29 +204,23 @@ Username: vagrant
 Password: vagrant
 ```
 
-## Acceso SSH desde Windows
+## 7. Acceso por Terminal o PowerShell
 
-También puede conectarse desde PowerShell o Terminal de Windows:
+Por NAT:
 
 ```powershell
 ssh -p 2222 vagrant@127.0.0.1
 ```
 
-O mediante la red privada del laboratorio:
+Por la red privada:
 
 ```powershell
 ssh vagrant@192.168.10.53
 ```
 
-En la primera conexión a una VM recién instalada, OpenSSH puede pedir confirmar la nueva clave del servidor. Revise la huella mostrada y escriba:
+En la primera conexión puede solicitar la confirmación de la nueva clave SSH. Las entradas antiguas del laboratorio se eliminan selectivamente; no se borra el archivo completo `known_hosts`.
 
-```text
-yes
-```
-
-Los scripts eliminan solamente las claves antiguas asociadas con este laboratorio; no borran los demás servidores guardados en `known_hosts`.
-
-## Uso diario
+## 8. Uso diario
 
 Para iniciar la VM y abrir WebSSH:
 
@@ -132,102 +234,55 @@ Para solicitar un apagado correcto de Ubuntu:
 DETENER_LAB.cmd
 ```
 
-No cierre VirtualBox a la fuerza ni apague Windows mientras la VM está escribiendo datos.
+No apague Windows mientras la VM esté escribiendo en disco.
 
-## Diagnóstico
+## 9. Limpiar únicamente las claves SSH del laboratorio
 
-Cuando la instalación, el inicio o la red no funcionen, ejecute:
-
-```text
-DIAGNOSTICAR_LAB.cmd
-```
-
-El diagnóstico no modifica la VM. Comprueba, entre otros elementos:
-
-- versión de VirtualBox;
-- OVA y SHA-256;
-- estado de la VM;
-- adaptadores de red;
-- reglas NAT;
-- puertos `2222` y `8888`;
-- acceso a `192.168.10.53`;
-- entradas del laboratorio en `known_hosts`.
-
-El registro queda en `logs\`. Envíe al instructor el archivo de diagnóstico más reciente, no una captura parcial de la ventana.
-
-## Limpiar únicamente las claves SSH antiguas
-
-Cuando SSH muestre:
+Cuando aparezca:
 
 ```text
 WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!
 ```
 
-puede ejecutar:
+Ejecute:
 
 ```text
 LIMPIAR_KNOWN_HOSTS_LAB.cmd
 ```
 
-La herramienta busca y elimina únicamente entradas asociadas con:
+La herramienta revisa únicamente las identidades usadas por el laboratorio, incluidas `[127.0.0.1]:2222`, `192.168.10.53`, `resolver1` y `resolver1.lan.home.arpa`. No elimina claves de otros servidores.
 
-```text
-[127.0.0.1]:2222
-[localhost]:2222
-[::1]:2222
-192.168.10.53
-resolver1
-resolver1.lan.home.arpa
-curso-dns-lab
-curso-dns-lab.lan.home.arpa
-curso-dns-lambda
-```
+## 10. Desinstalación
 
-No elimina el archivo completo ni las claves de otros equipos.
-
-## Desinstalación completa
-
-Cuando termine el curso, haga doble clic en:
+Ejecute:
 
 ```text
 DESINSTALAR_LAB.cmd
 ```
 
-El desinstalador solicitará confirmación y retirará:
+El desinstalador retira:
 
-- la VM `Curso-DNS-Lambda`;
-- sus discos, configuración y registros propios de VirtualBox;
-- sus reglas NAT de los puertos `2222` y `8888`;
-- la interfaz Host-Only creada para el laboratorio, cuando ninguna otra VM la utilice;
-- el DHCP de VirtualBox asociado, si existe;
-- las entradas de `known_hosts` relacionadas con el laboratorio;
-- el estado guardado en `%ProgramData%\CursoDNSCampus`.
+- `Curso-DNS-Lambda` y sus discos;
+- sus reglas NAT;
+- la interfaz Host-Only cuando fue creada por el instalador y ninguna otra VM la usa;
+- las entradas SSH del laboratorio;
+- el estado guardado en `%ProgramData%\CursoDNSCampus`;
+- y vuelve a habilitar los adaptadores que el instalador haya deshabilitado temporalmente.
 
-No elimina:
+Si la instalación reutilizó una interfaz Host-Only preexistente, esa interfaz se conserva.
 
-- Oracle VirtualBox;
-- otras máquinas virtuales;
-- otras interfaces Host-Only;
-- la conexión Wi-Fi o Ethernet;
-- archivos personales;
-- claves SSH de otros servidores.
+No elimina VirtualBox, otras VM, archivos personales, Wi-Fi, Ethernet ni claves SSH ajenas al laboratorio.
 
-Después de desinstalar puede borrar manualmente la carpeta descargada.
+## 11. Solicitar soporte
 
-## Direcciones del laboratorio
+No envíe solamente una captura de la ventana. Adjunte el archivo más reciente de la operación correspondiente:
 
 ```text
-Windows Host-Only: 192.168.10.1/24
-Ubuntu:             192.168.10.53/24
-SSH por NAT:         127.0.0.1:2222
-WebSSH:              127.0.0.1:8888
+logs\diagnostico-*.log
+logs\instalacion-*.log
+logs\desinstalacion-*.log
+logs\inicio-*.log
+logs\detencion-*.log
 ```
 
-## Credenciales iniciales
-
-```text
-Usuario:    vagrant
-Contraseña: vagrant
-```
-
-Estas credenciales pertenecen exclusivamente a la máquina de práctica.
+Incluya también qué opción eligió cuando el script mostró una decisión interactiva.
